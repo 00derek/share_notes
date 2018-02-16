@@ -1,0 +1,38 @@
+# getting reputations
+
+mysql -h gs-read-2016-3-24-1.cpkpnksgl3uc.us-west-1.rds.amazonaws.com gigspoon -e "SELECT agent_reputation_agent_id, agent_reputation_positive_feedback, agent_reputation_negative_feedback from agent_reputation"| sed 's/\t/","/g;s/^/"/;s/$/"/;s/\ //g' > reputations.csv
+
+
+# cleanup
+df = pd.read_csv('reputations.csv')
+nozeroesdf = df[(df[['agent_reputation_positive_feedback', 'agent_reputation_negative_feedback']].T != 0).any()]
+
+
+# create new table
+create table test (agent_id character varying(200), agent_positive_feedback_count integer, agent_negative_feedback_count integer)
+
+# loading table
+> \copy test from 'test.csv' WITH (FORMAT csv);
+
+or 
+
+import pandas as pd
+nozeroesdf.columns = [c.lower() for c in nozeroesdf.columns] #postgres doesn't like capitals or spaces
+
+from sqlalchemy import create_engine
+engine = create_engine('postgresql://username:password@localhost:5432/dbname')
+
+df.to_sql("test", engine)
+
+
+
+# update main table
+UPDATE customer_profile cp
+SET agent_negative_feedback_count = cp.agent_negative_feedback_count,
+  agent_positive_feedback_count = cp.agent_positive_feedback_count
+FROM test t
+WHERE t.agent_id = cp.agent_id
+
+
+# and drop the test table
+Drop table test
