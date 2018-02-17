@@ -6,7 +6,7 @@ mysql -h gs-read-2016-3-24-1.cpkpnksgl3uc.us-west-1.rds.amazonaws.com gigspoon -
 # cleanup
 df = pd.read_csv('reputations.csv')
 nozeroesdf = df[(df[['agent_reputation_positive_feedback', 'agent_reputation_negative_feedback']].T != 0).any()]
-
+nozeroesdf.to_csv('test.csv', header=False, index=False)
 
 # create new table
 create table test (agent_id character varying(200), agent_positive_feedback_count integer, agent_negative_feedback_count integer)
